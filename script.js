@@ -9,6 +9,7 @@ $(document).ready(function() {
   let startTime;
   let interval;
   let lapNumber = 1;
+  let previousLapTime = 0; // Track the time of the previous lap
 
   startBtn.click(startTimer);
   pauseBtn.click(pauseTimer);
@@ -41,6 +42,7 @@ $(document).ready(function() {
     clearInterval(interval);
     startTime = undefined;
     lapNumber = 1;
+    previousLapTime = 0;
     timeDisplay.html('00:00:00');
     lapTable.html('');
     startBtn.prop('disabled', false);
@@ -50,27 +52,38 @@ $(document).ready(function() {
 
   function lapTimer() {
     const lapTime = calculateTime();
-    const newRow = $('<div>').addClass('lap-row').html(`Lap ${lapNumber}: <span class="lap-time">${lapTime}</span>`);
+    const totalLapTime = lapNumber === 1 ? lapTime : calculateTotalLapTime(previousLapTime);
+    const newRow = $('<div>').addClass('lap-row').html(`Lap ${lapNumber}: <span class="lap-time">${lapTime}</span> (Total: ${totalLapTime})`);
     lapTable.append(newRow);
+    previousLapTime = lapTime;
     lapNumber++;
+  }
+
+  function calculateTime() {
+    return Date.now() - startTime;
+  }
+
+  function calculateTotalLapTime(previousLapTime) {
+    const currentLapTime = calculateTime();
+    const totalTime = currentLapTime + previousLapTime;
+    return formatTime(totalTime);
   }
 
   function updateTime() {
     const time = calculateTime();
-    timeDisplay.html(time);
-  }
-
-  function calculateTime() {
-    const currentTime = Date.now() - startTime;
-    const milliseconds = Math.floor((currentTime % 1000) / 10);
-    const seconds = Math.floor((currentTime / 1000) % 60);
-    const minutes = Math.floor((currentTime / 1000 / 60) % 60);
-    const hours = Math.floor(currentTime / 1000 / 60 / 60);
-
-    return `${formatTime(hours)}:${formatTime(minutes)}:${formatTime(seconds)} <span class="milliseconds">${formatTime(milliseconds)}</span>`;
+    timeDisplay.html(formatTime(time));
   }
 
   function formatTime(time) {
-    return time.toString().padStart(2, '0');
+    const milliseconds = Math.floor((time % 1000) / 10);
+    const seconds = Math.floor((time / 1000) % 60);
+    const minutes = Math.floor((time / 1000 / 60) % 60);
+    const hours = Math.floor(time / 1000 / 60 / 60);
+
+    return `${formatTimeSegment(hours)}:${formatTimeSegment(minutes)}:${formatTimeSegment(seconds)} <span class="milliseconds">${formatTimeSegment(milliseconds)}</span>`;
+  }
+
+  function formatTimeSegment(segment) {
+    return segment.toString().padStart(2, '0');
   }
 });
